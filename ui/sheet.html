@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spreadsheet</title>
+<link rel="stylesheet" href="../__picode/tokens.css">
+<style>
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; background: var(--pc-bg); color: var(--pc-text); font: 13px/1.45 var(--pc-font); }
+  header { display: flex; align-items: center; gap: 10px; min-height: var(--pc-ctl-h); padding: 0 12px; border-bottom: 1px solid var(--pc-border); }
+  header .meta { color: var(--pc-text-muted); white-space: nowrap; }
+  nav { display: flex; gap: 4px; overflow-x: auto; padding: 6px 12px; border-bottom: 1px solid var(--pc-border); }
+  nav button { height: 28px; padding: 0 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--pc-text-muted); font: inherit; white-space: nowrap; cursor: pointer; }
+  nav button[aria-pressed="true"] { border-color: var(--pc-border); background: var(--pc-panel); color: var(--pc-text); }
+  main { flex: 1; min-height: 0; overflow: auto; }
+  table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--pc-border); padding: 3px 8px; text-align: left; white-space: nowrap; max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
+  th { position: sticky; top: 0; background: var(--pc-panel); font-weight: 600; }
+  td.num { text-align: right; }
+  td.rownum { color: var(--pc-text-muted); text-align: right; background: var(--pc-panel); }
+  tr:nth-child(even) td { background: color-mix(in srgb, var(--pc-panel) 45%, transparent); }
+  .note { margin: 0; padding: 6px 12px; color: var(--pc-text-muted); border-top: 1px solid var(--pc-border); }
+  .state { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px; max-width: 520px; }
+  .state p { margin: 0; }
+  [hidden] { display: none !important; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<header><span class="meta" id="meta">Spreadsheet</span></header>
+<nav id="tabs" aria-label="Sheets" hidden></nav>
+<main id="view"></main>
+<p class="note" id="note" hidden></p>
+<div class="state" id="state" hidden>
+  <p id="state-text"></p>
+  <button type="button" class="pc-button" id="retry">Retry</button>
+</div>
+<script type="module">
+// An artifact kind an extension draws (ADR-0230 door A, amendment of
+// 2026-11-05): the workbook arrives through the frame door as base64, since
+// a spreadsheet is a ZIP and COGNIX[WS] has no viewer for it. The page reads
+// nothing else, and writes nothing.
+const MAX_ROWS = 500;
+const MAX_COLS = 60;
+const el = (id) => document.getElementById(id);
+const meta = el("meta"), tabs = el("tabs"), view = el("view"), note = el("note"), state = el("state"), stateText = el("state-text");
+
+function fail(text) {
+  stateText.textContent = text;
+  state.hidden = false;
+  view.replaceChildren();
+  tabs.hidden = true;
+  note.hidden = true;
+}
+el("retry").addEventListener("click", () => location.reload());
+
+let book = null;
+let active = "";
+
+function draw() {
+  const ws = book.Sheets[active];
+  // Two passes: typed cells decide alignment, formatted text is shown.
+  const typed = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "", blankrows: false });
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "", blankrows: false });
+  const table = document.createElement("table");
+  const shown = rows.slice(0, MAX_ROWS);
+  const width = Math.min(MAX_COLS, shown.reduce((n, r) => Math.max(n, r.length), 0));
+  const head = document.createElement("thead");
+  const hr = document.createElement("tr");
+  const corner = document.createElement("th");
+  corner.scope = "col";
+  corner.setAttribute("aria-label", "Row");
+  hr.append(corner);
+  for (let c = 0; c < width; c++) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = XLSX.utils.encode_col(c);
+    hr.append(th);
+  }
+  head.append(hr);
+  const body = document.createElement("tbody");
+  shown.forEach((row, r) => {
+    const tr = document.createElement("tr");
+    const num = document.createElement("td");
+    num.className = "rownum";
+    num.textContent = String(r + 1);
+    tr.append(num);
+    for (let c = 0; c < width; c++) {
+      const td = document.createElement("td");
+      const v = row[c] ?? "";
+      td.textContent = typeof v === "string" && v.length > 400 ? v.slice(0, 400) + "…" : v;
+      if (typeof typed[r]?.[c] === "number") td.className = "num";
+      tr.append(td);
+    }
+    body.append(tr);
+  });
+  table.append(head, body);
+  view.replaceChildren(table);
+  const cut = rows.length > MAX_ROWS || shown.some((r) => r.length > MAX_COLS);
+  note.textContent = cut ? "Showing the first " + MAX_ROWS + " rows and " + MAX_COLS + " columns." : "";
+  note.hidden = !cut;
+  for (const b of tabs.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.sheet === active));
+}
+
+try {
+  const door = await picode.use("artifact");
+  const info = await door.get();
+  const file = await door.read(info.entry);
+  if (!file?.base64) throw new Error("no workbook");
+  book = XLSX.read(file.base64, { type: "base64" });
+  book.SheetNames = book.SheetNames || [];
+  if (!book.SheetNames.length) throw new Error("no sheets");
+  active = book.SheetNames[0];
+  meta.textContent = book.SheetNames.length === 1 ? "1 sheet" : book.SheetNames.length + " sheets";
+  for (const sheet of book.SheetNames) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.sheet = sheet;
+    b.textContent = sheet;
+    b.addEventListener("click", () => { active = sheet; draw(); });
+    tabs.append(b);
+  }
+  tabs.hidden = book.SheetNames.length < 2;
+  draw();
+} catch (e) {
+  fail(e?.message === "no sheets" ? "This workbook holds no sheet." : "This workbook could not be read. Its file is still in the artifact's versions.");
+}
+</script>
+</body>
+</html>

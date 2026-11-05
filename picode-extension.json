@@ -1,0 +1,10 @@
+{
+  "id": "picode-office",
+  "name": "Office files",
+  "version": "0.1.2",
+  "apiVersion": 1,
+  "publisher": "COGNIX[WS] example",
+  "description": "Reference extension for door A with a file type COGNIX[WS] has no viewer for: a spreadsheet artifact drawn from the workbook itself.",
+  "ui": {"pages": [{"id": "sheet", "title": "Spreadsheet", "path": "ui/sheet.html"}]},
+  "contributes": {"artifactKinds": [{"kind": "xlsx", "title": "Spreadsheet", "types": ["xlsx"], "page": "sheet"}]}
+}
