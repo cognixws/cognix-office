@@ -4,14 +4,19 @@
   "type": "module",
   "version": "0.2.0",
   "description": "The sheet page of the Office files extension, bundled for the artifact sandbox",
-  "scripts": { "build": "vite build" },
+  "scripts": {
+    "build": "vite build"
+  },
   "dependencies": {
     "@univerjs/preset-sheets-core": "0.25.1",
+    "@univerjs/preset-sheets-find-replace": "0.25.1",
     "@univerjs/presets": "0.25.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rxjs": "^7.8.1",
     "xlsx": "0.18.5"
   },
-  "devDependencies": { "vite": "^6.0.0" }
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
 }

@@ -1,8 +1,11 @@
 import * as XLSX from "xlsx";
 import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 import UniverPresetSheetsCorePtBR from "@univerjs/preset-sheets-core/locales/pt-BR";
+import { UniverSheetsFindReplacePreset } from "@univerjs/preset-sheets-find-replace";
+import FindReplacePtBR from "@univerjs/preset-sheets-find-replace/locales/pt-BR";
 import { createUniver, LocaleType, mergeLocales } from "@univerjs/presets";
 import "@univerjs/preset-sheets-core/lib/index.css";
+import "./sheet.css";
 
 // The Office files page: one spreadsheet artifact, drawn by Univer from the
 // workbook itself. The version arrives through the artifact door as base64 (a
@@ -225,7 +228,7 @@ async function main() {
   try {
     const made = createUniver({
       locale: LocaleType.PT_BR,
-      locales: { [LocaleType.PT_BR]: mergeLocales(UniverPresetSheetsCorePtBR) },
+      locales: { [LocaleType.PT_BR]: mergeLocales(UniverPresetSheetsCorePtBR, FindReplacePtBR) },
       presets: [
         UniverSheetsCorePreset({
           container: "app",
@@ -238,6 +241,9 @@ async function main() {
           statusBarStatistic: true,
           disableAutoFocus: !writable,
         }),
+        // Ctrl+F inside the grid (find and replace), the daily Excel/Sheets
+        // habit; the preset brings the dialog and the sheet commands.
+        UniverSheetsFindReplacePreset(),
       ],
     });
     univerAPI = made.univerAPI;

@@ -28,11 +28,19 @@ one version need `--entry` to say which one it opens on.
 - **Reading the workbook:** SheetJS (Apache-2.0) parses the version's base64
   bytes and converts them into a Univer workbook — values, formulas, number
   formats, column widths and merges. The page reads that one version through
-  the artifact door and writes nothing.
-- **Read-only (v2.0):** `setEditable(false)`. Editing, autosave and conflict
-  handling are v2.1, which needs the write doors in the core (ADR-0230
-  amendment); see `docs/plans/artifact-xlsx-v2.md` in the COGNIX[WS]
-  repository.
+  the artifact door.
+- **Editing (v2.1):** when the version declared `publish`, the grid is
+  editable and saves itself 1.5 s after the last change as a new version,
+  authored by the person, note "Saved by the page". The bar reads
+  `Salvo · vN`; a version that lands meanwhile raises a conflict line
+  ("Abra a vN" / "Manter a minha" / baixar) instead of overwriting it.
+  Read-only versions keep `setEditable(false)`.
+- **Find and replace:** `Ctrl+F` (or `Cmd+F`) inside the grid opens
+  "Localizar" with the match count; **Pesquisa e Substituição Avançadas**
+  brings the replace field and the search options. The dialog is capped to the
+  pane and scrolls inside it, so its actions stay reachable in a small pane.
+- **A file that is not a workbook** is refused on the page with one sentence
+  ("This workbook could not be read…"), not drawn as an empty grid.
 
 ## Development
 
@@ -44,7 +52,8 @@ npm run build     # writes ui/office.js and ui/office.css
 
 The built files are committed: an install clones the repository at a tag and
 must work without a build step. Rebuild them when a dependency changes, and
-bump the manifest's `version` with the release tag (`v<version>`).
+bump the manifest's `version` with the release tag (`v<version>`); 0.3.4 is
+find and replace plus the dialog cap.
 
 ## Limits
 
@@ -52,7 +61,10 @@ bump the manifest's `version` with the release tag (`v<version>`).
   the whole file before drawing it.
 - Number formats follow the workbook's format codes; separators are the
   sheet engine's (a pt-BR formatter is polish, not a promise).
-- The phone shows the same read-only sheet; editing there is out of scope.
+- The phone shows the same page; the grid scrolls and pinches. Editing on a
+  phone is untested — the pane is small and touch selection is the engine's.
+- Find and replace is inside the sheet's own UI; there is no PiCode-side
+  search over a workbook.
 
 ## License
 

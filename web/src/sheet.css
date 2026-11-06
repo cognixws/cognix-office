@@ -1,0 +1,7 @@
+/* Univer's dialogs (find and replace) size to their content and can be taller
+   than the artifact pane, leaving their actions below the frame with nothing
+   to scroll: cap them to the pane and scroll inside instead. */
+[role="dialog"] {
+  max-height: calc(100vh - 80px);
+  overflow: auto;
+}
