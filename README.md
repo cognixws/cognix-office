@@ -45,8 +45,15 @@ one version need `--entry` to say which one it opens on.
   moves Univer's own UI and the sheet's number formats: pt-BR reads
   `1.234,57`, en-US `1,234.57`. The patterns saved in the `.xlsx` are the
   workbook's own (`#,##0.00`) — the display never rewrites the file.
-- **A file that is not a workbook** is refused on the page with one sentence
-  ("This workbook could not be read…"), not drawn as an empty grid.
+- **A file that is not a workbook** is refused before a version is stored:
+  the manifest declares `entryContains: ["[Content_Types].xml"]`, so PiCode
+  refuses a version whose entry is not a ZIP holding an OOXML workbook's
+  content types. The page also refuses one with a sentence ("This workbook
+  could not be read…") rather than drawing an empty grid.
+- **Freeze panes** from the bar's **Freeze…** menu: freeze the rows above or
+  the columns left of the active cell, or both; unfreeze. It is a view
+  setting of the current pane — the `.xlsx` is not rewritten, so it is not
+  kept across loads.
 
 ## Development
 
@@ -58,8 +65,8 @@ npm run build     # writes ui/office.js and ui/office.css
 
 The built files are committed: an install clones the repository at a tag and
 must work without a build step. Rebuild them when a dependency changes, and
-bump the manifest's `version` with the release tag (`v<version>`); 0.3.5 is
-the language selector and separators (0.3.4 was find and replace).
+bump the manifest's `version` with the release tag (`v<version>`); 0.3.6 is
+freeze panes and the entry container rule (0.3.5 was the language selector).
 
 ## Limits
 

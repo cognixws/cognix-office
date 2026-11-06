@@ -21,7 +21,7 @@
   /* A phone's app header already names the artifact; the bar keeps the
      language and the save state and leaves the menu strip alone. */
   @media (max-width: 560px) {
-    #bar .name, #bar .sp { display: none; }
+    #bar .name, #bar .sp, #bar #freeze { display: none; }
   }
   .save { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #667085; white-space: nowrap; }
   .save .dot { width: 6px; height: 6px; border-radius: 50%; background: #98a2b3; }
@@ -51,6 +51,13 @@
 <div id="bar" hidden>
   <span class="name">Planilha</span>
   <span class="sp"></span>
+  <select id="freeze" aria-label="Congelar" title="Congelar" hidden>
+    <option value="">Congelar…</option>
+    <option value="rows">Congelar linhas acima</option>
+    <option value="columns">Congelar colunas à esquerda</option>
+    <option value="both">Congelar linhas e colunas</option>
+    <option value="none">Descongelar</option>
+  </select>
   <select id="lang" aria-label="Idioma" title="Idioma" hidden>
     <option value="pt-BR">Português</option>
     <option value="en-US">English</option>

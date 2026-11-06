@@ -20,6 +20,12 @@ export const numfmtOf = (lang) => (lang === "pt-BR" ? "pt_BR" : "en_US");
 export const STRINGS = {
   "pt-BR": {
     language: "Idioma",
+    freeze: "Congelar…",
+    freezeRows: "Congelar linhas acima",
+    freezeColumns: "Congelar colunas à esquerda",
+    freezeBoth: "Congelar linhas e colunas",
+    unfreeze: "Descongelar",
+    freezeHint: "A célula ativa decide o limite; a congelação vale só nesta visualização",
     title: "Planilha",
     saved: (n) => "Salvo · v" + n,
     saving: "Salvando…",
@@ -38,6 +44,12 @@ export const STRINGS = {
   },
   "en-US": {
     language: "Language",
+    freeze: "Freeze…",
+    freezeRows: "Freeze rows above",
+    freezeColumns: "Freeze columns to the left",
+    freezeBoth: "Freeze rows and columns",
+    unfreeze: "Unfreeze",
+    freezeHint: "The active cell sets the boundary; the freeze is for this view only",
     title: "Spreadsheet",
     saved: (n) => "Saved · v" + n,
     saving: "Saving…",

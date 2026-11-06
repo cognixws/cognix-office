@@ -28,6 +28,7 @@ const conflictOpen = conflict ? conflict.querySelector('[data-act="open"]') : nu
 const conflictKeep = conflict ? conflict.querySelector('[data-act="keep"]') : null;
 const bar = document.getElementById("bar");
 const langEl = document.getElementById("lang");
+const freezeEl = document.getElementById("freeze");
 const retryEl = document.getElementById("retry");
 
 // The page's language: the browser's, changed here and held for this view.
@@ -213,6 +214,14 @@ function hideConflict() {
 // setLocale, and its number formats follow setNumfmtLocal on the workbook.
 function applyLanguage() {
   if (langEl) { langEl.value = lang; langEl.setAttribute("aria-label", S().language); langEl.title = S().language; }
+  if (freezeEl) {
+    const s = S();
+    freezeEl.setAttribute("aria-label", s.freezeHint);
+    freezeEl.title = s.freezeHint;
+    const labels = { "": s.freeze, rows: s.freezeRows, columns: s.freezeColumns, both: s.freezeBoth, none: s.unfreeze };
+    for (const opt of freezeEl.options) if (opt.value in labels) opt.textContent = labels[opt.value];
+    freezeEl.value = "";
+  }
   if (typeof document !== "undefined") document.documentElement.lang = lang;
   if (stateTitle) stateTitle.textContent = S().undrawable;
   if (retryEl) retryEl.textContent = S().retry;
@@ -305,6 +314,24 @@ async function main() {
     // The sheet's numbers and dates read in the chosen language (pt_BR shows
     // 1.234,57 where en_US shows 1,234.57); patterns are saved unchanged.
     if (workbook && typeof workbook.setNumfmtLocal === "function") workbook.setNumfmtLocal(numfmtOf(lang));
+    if (freezeEl) {
+      freezeEl.hidden = false;
+      freezeEl.addEventListener("change", () => {
+        const kind = freezeEl.value;
+        freezeEl.value = "";
+        if (!kind) return;
+        const sheet = univerAPI.getActiveWorkbook() && univerAPI.getActiveWorkbook().getActiveSheet();
+        if (!sheet) return;
+        const cell = typeof sheet.getActiveCell === "function" ? sheet.getActiveCell() : null;
+        const row = cell && typeof cell.getRow === "function" ? cell.getRow() : 0;
+        const col = cell && typeof cell.getColumn === "function" ? cell.getColumn() : 0;
+        try {
+          if (kind === "rows" || kind === "both") sheet.setFrozenRows(row);
+          if (kind === "columns" || kind === "both") sheet.setFrozenColumns(col);
+          if (kind === "none") { sheet.setFrozenRows(0); sheet.setFrozenColumns(0); }
+        } catch { /* the sheet keeps its view */ }
+      });
+    }
     if (langEl) {
       langEl.hidden = false;
       langEl.addEventListener("change", () => {
