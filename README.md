@@ -13,7 +13,7 @@ page renders it in the artifact pane, on the Artifacts page and on the phone.
 ## Publish a workbook
 
 ```sh
-picode artifact publish q3.xlsx --title "Q3 plan" --kind ext:picode-office/xlsx
+picode artifact publish q3.xlsx --title "Q3 plan" --kind ext:office/xlsx
 ```
 
 The version opens on its only `.xlsx` file, under any name. Two workbooks in

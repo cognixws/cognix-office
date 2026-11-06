@@ -1,5 +1,6 @@
 {
-  "id": "picode-office",
+  "id": "office",
+  "formerly": ["picode-office"],
   "name": "Office files",
   "version": "0.3.6",
   "apiVersion": 1,
