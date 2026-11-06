@@ -9,6 +9,11 @@
   html, body { margin: 0; height: 100%; color-scheme: light; background: #fff; font: 13px/1.45 system-ui, sans-serif; color: #1b1d23; }
   body { display: flex; flex-direction: column; }
   #bar { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 12px; border-bottom: 1px solid #e9ecf2; background: #fff; }
+  /* One row of chrome: the title and the save state ride the menu strip's
+     right side, over it, so Univer's re-renders never take them away
+     (owner, 2026-11-06). */
+  #app { position: relative; }
+  #bar { position: absolute; top: 0; right: 10px; height: 29px; min-height: 0; padding: 0; border: 0; background: transparent; z-index: 20; }
   #bar[hidden] { display: none; }
   #bar .name { font-weight: 600; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #bar .sp { flex: 1; }

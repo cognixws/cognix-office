@@ -242,6 +242,7 @@ async function main() {
     });
     univerAPI = made.univerAPI;
     univerAPI.createWorkbook(toSnapshot(book, info.title));
+
     const workbook = univerAPI.getActiveWorkbook();
     if (!writable && workbook && typeof workbook.setEditable === "function") workbook.setEditable(false);
   } catch {
@@ -250,6 +251,10 @@ async function main() {
   }
 
   if (bar) bar.hidden = false;
+  if (bar) {
+    const title = bar.querySelector(".name");
+    if (title) title.textContent = info.title || "Planilha";
+  }
   if (!writable) {
     setSave("Somente leitura", "");
     document.body.dataset.ready = "1";
