@@ -39,6 +39,12 @@ one version need `--entry` to say which one it opens on.
   "Localizar" with the match count; **Pesquisa e Substituição Avançadas**
   brings the replace field and the search options. The dialog is capped to the
   pane and scrolls inside it, so its actions stay reachable in a small pane.
+- **Language:** the bar's selector offers **Português** and **English**, and
+  the browser's language is the default on every load (the artifact frame is
+  sandboxed without storage, so a choice is not kept across loads). The choice
+  moves Univer's own UI and the sheet's number formats: pt-BR reads
+  `1.234,57`, en-US `1,234.57`. The patterns saved in the `.xlsx` are the
+  workbook's own (`#,##0.00`) — the display never rewrites the file.
 - **A file that is not a workbook** is refused on the page with one sentence
   ("This workbook could not be read…"), not drawn as an empty grid.
 
@@ -52,15 +58,16 @@ npm run build     # writes ui/office.js and ui/office.css
 
 The built files are committed: an install clones the repository at a tag and
 must work without a build step. Rebuild them when a dependency changes, and
-bump the manifest's `version` with the release tag (`v<version>`); 0.3.4 is
-find and replace plus the dialog cap.
+bump the manifest's `version` with the release tag (`v<version>`); 0.3.5 is
+the language selector and separators (0.3.4 was find and replace).
 
 ## Limits
 
 - One workbook per version, up to 16 MiB (the artifact cap); the page loads
   the whole file before drawing it.
-- Number formats follow the workbook's format codes; separators are the
-  sheet engine's (a pt-BR formatter is polish, not a promise).
+- Number formats are the workbook's format codes; their separators follow the
+  page's language (pt-BR `1.234,57`, en-US `1,234.57`), not a stored sheet
+  locale — the artifact is the same file in either language.
 - The phone shows the same page; the grid scrolls and pinches. Editing on a
   phone is untested — the pane is small and touch selection is the engine's.
 - Find and replace is inside the sheet's own UI; there is no PiCode-side

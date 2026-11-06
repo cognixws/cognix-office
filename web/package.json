@@ -5,7 +5,8 @@
   "version": "0.2.0",
   "description": "The sheet page of the Office files extension, bundled for the artifact sandbox",
   "scripts": {
-    "build": "vite build"
+    "build": "vite build",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@univerjs/preset-sheets-core": "0.25.1",

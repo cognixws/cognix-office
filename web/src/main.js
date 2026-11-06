@@ -1,9 +1,12 @@
 import * as XLSX from "xlsx";
 import { UniverSheetsCorePreset } from "@univerjs/preset-sheets-core";
 import UniverPresetSheetsCorePtBR from "@univerjs/preset-sheets-core/locales/pt-BR";
+import UniverPresetSheetsCoreEnUS from "@univerjs/preset-sheets-core/locales/en-US";
 import { UniverSheetsFindReplacePreset } from "@univerjs/preset-sheets-find-replace";
 import FindReplacePtBR from "@univerjs/preset-sheets-find-replace/locales/pt-BR";
-import { createUniver, LocaleType, mergeLocales } from "@univerjs/presets";
+import FindReplaceEnUS from "@univerjs/preset-sheets-find-replace/locales/en-US";
+import { localeOf, numfmtOf, resolveLang, stringsFor } from "./i18n.js";
+import { createUniver, mergeLocales } from "@univerjs/presets";
 import "@univerjs/preset-sheets-core/lib/index.css";
 import "./sheet.css";
 
@@ -16,11 +19,23 @@ import "./sheet.css";
 const app = document.getElementById("app");
 const state = document.getElementById("state");
 const stateText = document.getElementById("state-text");
+const stateTitle = document.getElementById("state-title");
 const saveEl = document.getElementById("save");
 const saveText = document.getElementById("save-text");
 const conflict = document.getElementById("conflict");
 const conflictText = document.getElementById("conflict-text");
+const conflictOpen = conflict ? conflict.querySelector('[data-act="open"]') : null;
+const conflictKeep = conflict ? conflict.querySelector('[data-act="keep"]') : null;
 const bar = document.getElementById("bar");
+const langEl = document.getElementById("lang");
+const retryEl = document.getElementById("retry");
+
+// The page's language: the browser's, changed here and held for this view.
+// The artifact frame is sandboxed without storage, so a choice is not kept
+// across loads; the browser's language is the default every time.
+let lang = resolveLang("", typeof navigator === "undefined" ? "" : navigator.language);
+let pageTitle = "";
+const S = () => stringsFor(lang);
 
 function fail(text) {
   if (state) { state.hidden = false; stateText.textContent = text; }
@@ -166,16 +181,48 @@ function setSave(text, tone) {
   saveText.textContent = text;
 }
 
+// The save state is kept as a key so a language change repaints it.
+let saveState = { kind: "saved", n: 1 };
+function paintSave() {
+  const s = S();
+  if (saveState.kind === "saved") setSave(s.saved(saveState.n), "ok");
+  else if (saveState.kind === "saving") setSave(s.saving, "busy");
+  else if (saveState.kind === "unsaved") setSave(s.unsaved, "error");
+  else if (saveState.kind === "readonly") setSave(s.readOnly, "");
+  else setSave(s.conflictSave(saveState.n), "error");
+}
+function setSaveState(kind, n) {
+  saveState = { kind, n: n || saveState.n || 1 };
+  paintSave();
+}
+
 function showConflict(liveVersion) {
   if (!conflict) return;
   conflict.hidden = false;
-  conflictText.textContent = "Um agente publicou a versão " + liveVersion + " enquanto você editava. Sua edição está aqui.";
-  setSave("Não salvo · v" + liveVersion + " chegou", "error");
+  conflictText.textContent = S().conflict(liveVersion);
+  setSaveState("conflict", liveVersion);
   conflict.dataset.live = String(liveVersion);
 }
 
 function hideConflict() {
   if (conflict) conflict.hidden = true;
+  delete conflict?.dataset.live;
+}
+
+// applyLanguage paints every string this page owns; Univer's own UI follows
+// setLocale, and its number formats follow setNumfmtLocal on the workbook.
+function applyLanguage() {
+  if (langEl) { langEl.value = lang; langEl.setAttribute("aria-label", S().language); langEl.title = S().language; }
+  if (typeof document !== "undefined") document.documentElement.lang = lang;
+  if (stateTitle) stateTitle.textContent = S().undrawable;
+  if (retryEl) retryEl.textContent = S().retry;
+  const nameEl = bar && bar.querySelector(".name");
+  if (nameEl) nameEl.textContent = pageTitle || S().title;
+  if (conflictOpen) conflictOpen.textContent = S().open;
+  if (conflictKeep) conflictKeep.textContent = S().keep;
+  const live = Number(conflict?.dataset.live) || 0;
+  if (conflict && !conflict.hidden && live) conflictText.textContent = S().conflict(live);
+  paintSave();
 }
 
 async function main() {
@@ -183,32 +230,33 @@ async function main() {
   try {
     door = await picode.use("artifact");
   } catch {
-    fail("This page draws an artifact version. Open it from the artifact, not on its own.");
+    fail(S().notStandalone);
     return;
   }
   let info;
   try {
     info = await door.get();
   } catch {
-    fail("This workbook could not be read. Its file is still in the artifact's versions.");
+    fail(S().unreadable);
     return;
   }
   if (!info || !info.entry) {
-    fail("This file is not a workbook COGNIX[WS] can draw.");
+    fail(S().notWorkbook);
     return;
   }
+  pageTitle = info.title || "";
   const writable = Array.isArray(info.capabilities) && info.capabilities.indexOf("publish") >= 0;
 
   let file;
   try {
     file = await door.read(info.entry);
   } catch {
-    fail("This workbook could not be read. Its file is still in the artifact's versions.");
+    fail(S().unreadable);
     return;
   }
   const base64 = file && file.base64;
   if (!base64) {
-    fail("This file is not a workbook COGNIX[WS] can draw.");
+    fail(S().notWorkbook);
     return;
   }
 
@@ -216,19 +264,22 @@ async function main() {
   try {
     book = XLSX.read(base64, { type: "base64", cellNF: true, cellStyles: true });
   } catch {
-    fail("This workbook could not be read. Its file is still in the artifact's versions.");
+    fail(S().unreadable);
     return;
   }
   if (!book.SheetNames.length) {
-    fail("This workbook holds no sheet.");
+    fail(S().noSheet);
     return;
   }
 
   let univerAPI;
   try {
     const made = createUniver({
-      locale: LocaleType.PT_BR,
-      locales: { [LocaleType.PT_BR]: mergeLocales(UniverPresetSheetsCorePtBR, FindReplacePtBR) },
+      locale: localeOf(lang),
+      locales: {
+        [localeOf("pt-BR")]: mergeLocales(UniverPresetSheetsCorePtBR, FindReplacePtBR),
+        [localeOf("en-US")]: mergeLocales(UniverPresetSheetsCoreEnUS, FindReplaceEnUS),
+      },
       presets: [
         UniverSheetsCorePreset({
           container: "app",
@@ -251,18 +302,33 @@ async function main() {
 
     const workbook = univerAPI.getActiveWorkbook();
     if (!writable && workbook && typeof workbook.setEditable === "function") workbook.setEditable(false);
+    // The sheet's numbers and dates read in the chosen language (pt_BR shows
+    // 1.234,57 where en_US shows 1,234.57); patterns are saved unchanged.
+    if (workbook && typeof workbook.setNumfmtLocal === "function") workbook.setNumfmtLocal(numfmtOf(lang));
+    if (langEl) {
+      langEl.hidden = false;
+      langEl.addEventListener("change", () => {
+        if (!["pt-BR", "en-US"].includes(langEl.value)) return;
+        lang = langEl.value;
+        try { univerAPI.setLocale(localeOf(lang)); } catch { /* the UI keeps its language */ }
+        const wb = univerAPI.getActiveWorkbook();
+        if (wb && typeof wb.setNumfmtLocal === "function") wb.setNumfmtLocal(numfmtOf(lang));
+        applyLanguage();
+      });
+    }
+    applyLanguage();
   } catch {
-    fail("This workbook could not be drawn. Its file is still in the artifact's versions.");
+    fail(S().undrawable);
     return;
   }
 
   if (bar) bar.hidden = false;
   if (bar) {
     const title = bar.querySelector(".name");
-    if (title) title.textContent = info.title || "Planilha";
+    if (title) title.textContent = pageTitle || S().title;
   }
   if (!writable) {
-    setSave("Somente leitura", "");
+    setSaveState("readonly");
     document.body.dataset.ready = "1";
     return;
   }
@@ -277,7 +343,7 @@ async function main() {
   let timer = 0;
   let saving = false;
   let pending = false;
-  setSave("Salvo · v" + baseVersion, "ok");
+  setSaveState("saved", baseVersion);
 
   async function save() {
     clearTimeout(timer);
@@ -289,23 +355,23 @@ async function main() {
       return;
     }
     const next = fromSnapshot(snapshot);
-    if (next === lastSaved) { setSave("Salvo · v" + baseVersion, "ok"); return; }
+    if (next === lastSaved) { setSaveState("saved", baseVersion); return; }
     saving = true;
-    setSave("Salvando…", "busy");
+    setSaveState("saving");
     try {
       const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
       baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
       lastSaved = next;
       hideConflict();
-      setSave("Salvo · v" + baseVersion, "ok");
+      setSaveState("saved", baseVersion);
     } catch (e) {
       if (e && e.code === -32009) {
         const live = Number(e.data && e.data.liveVersion) || 0;
         showConflict(live || baseVersion + 1);
       } else if (e && e.code === -32001) {
-        setSave("Somente leitura", "");
+        setSaveState("readonly");
       } else {
-        setSave("Não salvo · tente de novo", "error");
+        setSaveState("unsaved");
       }
     } finally {
       saving = false;
