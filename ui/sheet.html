@@ -22,7 +22,8 @@
   /* Univer centers its menu tabs and toolbar; the sheet's chrome starts at
      the left, aligned with the grid (owner, 2026-11-05). */
   #app header > div:first-child > div,
-  #app header > div:nth-child(2) { justify-content: flex-start !important; }
+  #app header > div:nth-child(2),
+  #app header > div:nth-child(2) > div { justify-content: flex-start !important; }
   #conflict { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border-top: 1px solid #e9ecf2; background: #f6f7f9; font-size: 12.5px; }
   #conflict[hidden] { display: none; }
   #conflict .grow { flex: 1 1 220px; min-width: 0; margin: 0; }
