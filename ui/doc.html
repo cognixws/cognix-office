@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word document</title>
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div id="bar" hidden>
+  <div id="tools">
+    <button type="button" class="ctl-btn" data-cmd="undo" data-edit-tool aria-label="Undo">
+      <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="redo" data-edit-tool aria-label="Redo">
+      <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <select id="block-style" class="ctl-select" data-edit-tool aria-label="Paragraph style">
+      <option value="p">Normal text</option>
+      <option value="h1">Heading 1</option>
+      <option value="h2">Heading 2</option>
+      <option value="h3">Heading 3</option>
+      <option value="quote">Quote</option>
+    </select>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="bold" data-edit-tool aria-label="Bold" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="italic" data-edit-tool aria-label="Italic" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="underline" data-edit-tool aria-label="Underline" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="strike" data-edit-tool aria-label="Strikethrough" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+    </button>
+    <input type="color" id="text-color" class="ctl-color" value="#2563eb" data-edit-tool aria-label="Text color">
+    <button type="button" class="ctl-btn" data-cmd="highlight" data-edit-tool aria-label="Highlight" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="bulletList" data-edit-tool aria-label="Bullet list" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="orderedList" data-edit-tool aria-label="Numbered list" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="alignLeft" data-edit-tool aria-label="Align left" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="alignCenter" data-edit-tool aria-label="Align center" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="17" y1="12" x2="7" y2="12"/><line x1="19" y1="18" x2="5" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="alignRight" data-edit-tool aria-label="Align right" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="tableMenu" data-edit-tool aria-label="Insert table">
+      <svg viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="find" aria-label="Find">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+  </div>
+  <span class="bar-spacer"></span>
+  <div class="bar-meta">
+    <span class="word-count" id="word-count"></span>
+    <select id="lang" class="ctl-select" aria-label="Language">
+      <option value="pt-BR">Português</option>
+      <option value="en-US">English</option>
+    </select>
+    <span class="save" id="save" data-tone="ok"><span class="dot"></span><span id="save-text">Saved</span></span>
+  </div>
+</div>
+
+<div id="table-menu" hidden role="menu">
+  <button type="button" data-tbl="insertTable">Insert table</button>
+  <button type="button" data-tbl="addRow" data-table-only hidden>Add row</button>
+  <button type="button" data-tbl="deleteRow" data-table-only hidden>Delete row</button>
+  <button type="button" data-tbl="addColumn" data-table-only hidden>Add column</button>
+  <button type="button" data-tbl="deleteColumn" data-table-only hidden>Delete column</button>
+  <button type="button" data-tbl="deleteTable" data-table-only hidden>Delete table</button>
+</div>
+
+<div id="find-bar" hidden>
+  <input type="text" id="find-input" placeholder="Find in document…" aria-label="Find">
+  <span id="find-count"></span>
+  <button type="button" class="ctl-btn" id="find-prev" aria-label="Previous match">
+    <svg viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+  <button type="button" class="ctl-btn" id="find-next" aria-label="Next match">
+    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+  <input type="text" id="replace-input" placeholder="Replace with…" data-edit-only aria-label="Replace with">
+  <button type="button" class="ctl-btn is-bordered" id="find-replace" data-edit-only>Replace</button>
+  <button type="button" class="ctl-btn is-bordered" id="find-replace-all" data-edit-only>Replace all</button>
+  <button type="button" class="ctl-btn" id="find-close" aria-label="Close find">
+    <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  </button>
+</div>
+
+<div id="desk" hidden>
+  <div id="paper"></div>
+</div>
+
+<div id="conflict" hidden role="status">
+  <p class="grow" id="conflict-text"></p>
+  <button type="button" data-act="open">Open the new version</button>
+  <button type="button" class="primary" data-act="keep">Keep mine</button>
+</div>
+
+<div id="state" hidden>
+  <h1 id="state-title">This document could not open</h1>
+  <p id="state-text">The .docx archive is damaged or incomplete, so the editor cannot render it. Click Reload to try reading the version again.</p>
+  <button type="button" id="retry">Reload</button>
+</div>
+
+<script src="doc.js"></script>
+</body>
+</html>

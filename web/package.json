@@ -5,19 +5,35 @@
   "version": "0.2.0",
   "description": "The sheet page of the Office files extension, bundled for the artifact sandbox",
   "scripts": {
-    "build": "vite build",
+    "build": "node build.mjs",
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@tiptap/core": "^2.27.3",
+    "@tiptap/extension-color": "^2.27.3",
+    "@tiptap/extension-highlight": "^2.27.3",
+    "@tiptap/extension-image": "^2.27.3",
+    "@tiptap/extension-link": "^2.27.3",
+    "@tiptap/extension-table": "^2.27.3",
+    "@tiptap/extension-table-cell": "^2.27.3",
+    "@tiptap/extension-table-header": "^2.27.3",
+    "@tiptap/extension-table-row": "^2.27.3",
+    "@tiptap/extension-text-align": "^2.27.3",
+    "@tiptap/extension-text-style": "^2.27.3",
+    "@tiptap/extension-underline": "^2.27.3",
+    "@tiptap/pm": "^2.27.3",
+    "@tiptap/starter-kit": "^2.27.3",
     "@univerjs/preset-sheets-core": "0.25.1",
     "@univerjs/preset-sheets-find-replace": "0.25.1",
     "@univerjs/presets": "0.25.1",
+    "fflate": "^0.8.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rxjs": "^7.8.1",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
+    "@xmldom/xmldom": "^0.8.15",
     "vite": "^6.0.0"
   }
 }

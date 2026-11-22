@@ -4,16 +4,26 @@
     "picode-office"
   ],
   "name": "Office files",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "apiVersion": 1,
   "publisher": "COGNIX[WS]",
-  "description": "Planilhas como artefatos: um agente publica um .xlsx e ele abre numa planilha de verdade, com fórmulas, abas e edição salva em novas versões.",
+  "description": "Spreadsheets, Word documents, and presentations as artifacts: publish or import .xlsx, .docx, and .pptx files and edit them in place with versioned autosave.",
   "ui": {
     "pages": [
       {
         "id": "sheet",
         "title": "Spreadsheet",
         "path": "ui/sheet.html"
+      },
+      {
+        "id": "doc",
+        "title": "Word document",
+        "path": "ui/doc.html"
+      },
+      {
+        "id": "deck",
+        "title": "Presentation",
+        "path": "ui/deck.html"
       }
     ]
   },
@@ -28,6 +38,30 @@
         "page": "sheet",
         "entryContains": [
           "[Content_Types].xml"
+        ]
+      },
+      {
+        "kind": "docx",
+        "title": "Word document",
+        "types": [
+          "docx"
+        ],
+        "page": "doc",
+        "entryContains": [
+          "[Content_Types].xml",
+          "word/document.xml"
+        ]
+      },
+      {
+        "kind": "pptx",
+        "title": "Presentation",
+        "types": [
+          "pptx"
+        ],
+        "page": "deck",
+        "entryContains": [
+          "[Content_Types].xml",
+          "ppt/presentation.xml"
         ]
       }
     ]

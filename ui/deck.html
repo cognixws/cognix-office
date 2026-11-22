@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Presentation</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<div id="bar" hidden>
+  <div class="slide-stepper">
+    <button type="button" class="ctl-btn" id="prev-slide" aria-label="Previous slide">
+      <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span id="slide-counter">Slide 1 of 1</span>
+    <button type="button" class="ctl-btn" id="next-slide" aria-label="Next slide">
+      <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+  <span class="bar-sep"></span>
+  <div id="tools">
+    <button type="button" class="ctl-btn" data-cmd="undo" data-edit-tool aria-label="Undo">
+      <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="redo" data-edit-tool aria-label="Redo">
+      <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="addSlide" data-edit-tool aria-label="New slide">
+      <svg viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="duplicateSlide" data-edit-tool aria-label="Duplicate slide">
+      <svg viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="moveUp" data-edit-tool aria-label="Move slide up">
+      <svg viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="moveDown" data-edit-tool aria-label="Move slide down">
+      <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="deleteSlide" data-edit-tool aria-label="Delete slide">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="addTextBox" data-edit-tool aria-label="Text box">
+      <svg viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="addRect" data-edit-tool aria-label="Rectangle">
+      <svg viewBox="0 0 24 24"><rect width="18" height="14" x="3" y="5" rx="2"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="addEllipse" data-edit-tool aria-label="Ellipse">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="deleteShape" data-edit-tool aria-label="Delete element" disabled>
+      <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <select id="font-size" class="ctl-select" data-edit-tool aria-label="Font size">
+      <option value="12">12</option>
+      <option value="14">14</option>
+      <option value="16">16</option>
+      <option value="18" selected>18</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+      <option value="28">28</option>
+      <option value="32">32</option>
+      <option value="36">36</option>
+      <option value="44">44</option>
+      <option value="54">54</option>
+    </select>
+    <button type="button" class="ctl-btn" data-cmd="bold" data-edit-tool aria-label="Bold" aria-pressed="false" disabled>
+      <svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="italic" data-edit-tool aria-label="Italic" aria-pressed="false" disabled>
+      <svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="underline" data-edit-tool aria-label="Underline" aria-pressed="false" disabled>
+      <svg viewBox="0 0 24 24"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+    </button>
+    <input type="color" id="text-color" class="ctl-color" value="#181b22" data-edit-tool aria-label="Text color">
+    <input type="color" id="fill-color" class="ctl-color" value="#dbeafe" data-edit-tool aria-label="Fill color">
+    <button type="button" class="ctl-btn" data-cmd="alignLeft" data-edit-tool aria-label="Align left">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="15" y1="12" x2="3" y2="12"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="alignCenter" data-edit-tool aria-label="Align center">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="17" y1="12" x2="7" y2="12"/><line x1="19" y1="18" x2="5" y2="18"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="alignRight" data-edit-tool aria-label="Align right">
+      <svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="12" x2="9" y2="12"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
+    </button>
+    <span class="bar-sep" data-edit-tool></span>
+    <button type="button" class="ctl-btn" data-cmd="notes" aria-label="Speaker notes" aria-pressed="false">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </button>
+    <button type="button" class="ctl-btn" data-cmd="find" aria-label="Find">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+  </div>
+  <span class="bar-spacer"></span>
+  <div class="bar-meta">
+    <select id="lang" class="ctl-select" aria-label="Language">
+      <option value="pt-BR">Português</option>
+      <option value="en-US">English</option>
+    </select>
+    <span class="save" id="save" data-tone="ok"><span class="dot"></span><span id="save-text">Saved</span></span>
+  </div>
+</div>
+
+<div id="find-bar" hidden>
+  <input type="text" id="find-input" placeholder="Find in presentation…" aria-label="Find">
+  <span id="find-count"></span>
+  <button type="button" class="ctl-btn" id="find-prev" aria-label="Previous match">
+    <svg viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></svg>
+  </button>
+  <button type="button" class="ctl-btn" id="find-next" aria-label="Next match">
+    <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+  <button type="button" class="ctl-btn" id="find-close" aria-label="Close find">
+    <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+  </button>
+</div>
+
+<div id="workspace" hidden>
+  <aside id="rail" aria-label="Slides"></aside>
+  <div id="main-col">
+    <div id="stage-wrap">
+      <div id="stage-box">
+        <div id="slide-canvas"></div>
+      </div>
+      <div id="empty-deck" hidden>
+        <h2 id="empty-title">This presentation has no slides</h2>
+        <p id="empty-body">Add the first slide to start editing this presentation.</p>
+        <button type="button" id="empty-add">Add slide</button>
+      </div>
+    </div>
+    <div id="notes-panel" hidden>
+      <label id="notes-label" for="notes-input">Speaker notes</label>
+      <textarea id="notes-input" placeholder="Speaker notes for this slide…"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="conflict" hidden role="status">
+  <p class="grow" id="conflict-text"></p>
+  <button type="button" data-act="open">Open the new version</button>
+  <button type="button" class="primary" data-act="keep">Keep mine</button>
+</div>
+
+<div id="state" hidden>
+  <h1 id="state-title">This presentation could not open</h1>
+  <p id="state-text">The .pptx archive is damaged or incomplete, so the editor cannot render it. Click Reload to try reading the version again.</p>
+  <button type="button" id="retry">Reload</button>
+</div>
+
+<script src="deck.js"></script>
+</body>
+</html>
