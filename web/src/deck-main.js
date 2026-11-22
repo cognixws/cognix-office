@@ -1,8 +1,13 @@
 import { parsePptx, savePptx } from "./pptx-codec.js";
 import { resolveLang, stringsFor } from "./i18n.js";
+import { navigateFrame, openStandaloneDraft } from "./standalone-store.js";
 import "./deck.css";
 
 const barEl = document.getElementById("bar");
+const standaloneHeadEl = document.getElementById("standalone-head");
+const backHubBtn = document.getElementById("back-hub");
+const backHubLabelEl = document.getElementById("back-hub-label");
+const standaloneTitleEl = document.getElementById("standalone-title");
 const toolsEl = document.getElementById("tools");
 const deckNameEl = document.getElementById("deck-name");
 const slideCounterEl = document.getElementById("slide-counter");
@@ -100,6 +105,12 @@ function paintSave() {
   if (saveState.kind === "saved") {
     saveEl.dataset.tone = "ok";
     saveTextEl.textContent = s.saved(saveState.n);
+  } else if (saveState.kind === "savedLocal") {
+    saveEl.dataset.tone = "ok";
+    saveTextEl.textContent = s.savedLocal;
+  } else if (saveState.kind === "tabOnly") {
+    saveEl.dataset.tone = "";
+    saveTextEl.textContent = s.tabOnly;
   } else if (saveState.kind === "saving") {
     saveEl.dataset.tone = "busy";
     saveTextEl.textContent = s.saving;
@@ -861,6 +872,9 @@ function applyLanguage() {
     if (emptyBodyEl) emptyBodyEl.textContent = s.deckEmptyBody;
     if (emptyAddBtn) emptyAddBtn.textContent = s.addSlide;
   }
+  if (backHubBtn) backHubBtn.setAttribute("aria-label", s.backToHubAria);
+  if (backHubLabelEl) backHubLabelEl.textContent = s.backToHub;
+  if (standaloneTitleEl) standaloneTitleEl.setAttribute("aria-label", s.fileTitleAria);
   paintSave();
 }
 
@@ -905,8 +919,8 @@ function runDeckSearch(jump = true) {
 let saveFn = null;
 let saveTimer = 0;
 
-function scheduleSave() {
-  if (!saveFn || !editableNow()) return;
+function scheduleSave(forceTitle = false) {
+  if (!saveFn || (!editableNow() && !forceTitle)) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => void saveFn(), 1500);
 }
@@ -932,44 +946,56 @@ function hideConflict() {
 }
 
 async function main() {
-  let door;
-  try {
-    door = await picode.use("artifact");
-  } catch {
-    fail(S().deckUnreadableTitle, S().notStandalone);
-    return;
-  }
-  if (!door || typeof door.get !== "function") {
-    fail(S().deckUnreadableTitle, S().notStandalone);
-    return;
-  }
+  const draft = await openStandaloneDraft("pptx");
+  let door = null;
+  let info = null;
+  let base64 = "";
 
-  let info;
-  try {
-    info = await door.get();
-  } catch {
-    fail(S().deckUnreadableTitle, S().deckUnreadable);
-    return;
-  }
-  if (!info || !info.entry) {
-    fail(S().deckUnreadableTitle, S().deckUnreadable);
-    return;
-  }
+  if (draft) {
+    pageTitle = draft.title || S().untitledDeck;
+    writableCap = true;
+    base64 = draft.data;
+    if (standaloneHeadEl) standaloneHeadEl.hidden = false;
+    if (standaloneTitleEl) standaloneTitleEl.value = pageTitle;
+    backHubBtn?.addEventListener("click", () => draft.back());
+  } else {
+    try {
+      door = await picode.use("artifact");
+    } catch {
+      navigateFrame("office.html");
+      return;
+    }
+    if (!door || typeof door.get !== "function") {
+      navigateFrame("office.html");
+      return;
+    }
 
-  pageTitle = info.title || "";
-  writableCap = Array.isArray(info.capabilities) && info.capabilities.includes("publish");
+    try {
+      info = await door.get();
+    } catch {
+      fail(S().deckUnreadableTitle, S().deckUnreadable);
+      return;
+    }
+    if (!info || !info.entry) {
+      fail(S().deckUnreadableTitle, S().deckUnreadable);
+      return;
+    }
 
-  let file;
-  try {
-    file = await door.read(info.entry);
-  } catch {
-    fail(S().deckUnreadableTitle, S().deckUnreadable);
-    return;
-  }
-  const base64 = file && file.base64;
-  if (!base64) {
-    fail(S().deckUnreadableTitle, S().deckUnreadable);
-    return;
+    pageTitle = info.title || "";
+    writableCap = Array.isArray(info.capabilities) && info.capabilities.includes("publish");
+
+    let file;
+    try {
+      file = await door.read(info.entry);
+    } catch {
+      fail(S().deckUnreadableTitle, S().deckUnreadable);
+      return;
+    }
+    base64 = (file && file.base64) || "";
+    if (!base64) {
+      fail(S().deckUnreadableTitle, S().deckUnreadable);
+      return;
+    }
   }
 
   try {
@@ -980,8 +1006,9 @@ async function main() {
     return;
   }
 
-  let baseVersion = info.version || 1;
+  let baseVersion = (info && info.version) || 1;
   let lastSaved = "";
+  let lastSavedTitle = pageTitle;
   try {
     lastSaved = savePptx(session, slides);
   } catch {
@@ -992,7 +1019,7 @@ async function main() {
 
   saveFn = async function save() {
     clearTimeout(saveTimer);
-    if (!editableNow()) return;
+    if (!editableNow() && !draft) return;
     if (saving) {
       pending = true;
       return;
@@ -1004,28 +1031,39 @@ async function main() {
       setSaveState("unsaved");
       return;
     }
-    if (next === lastSaved) {
-      setSaveState("saved", baseVersion);
+    const nextTitle = draft && standaloneTitleEl ? standaloneTitleEl.value.trim() || S().untitledDeck : pageTitle;
+    if (next === lastSaved && nextTitle === lastSavedTitle) {
+      setSaveState(draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved", baseVersion);
       return;
     }
     saving = true;
     setSaveState("saving");
     try {
-      const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
-      baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
-      lastSaved = next;
-      // Refresh session baseline from newly saved ZIP so subsequent untouched slides stay clean
-      try {
-        const refreshed = parsePptx(next);
-        session = refreshed;
-      } catch { /* keep session */ }
-      hideConflict();
-      setSaveState("saved", baseVersion);
+      if (draft) {
+        const res = await draft.save(next, nextTitle);
+        lastSaved = next;
+        lastSavedTitle = nextTitle;
+        pageTitle = nextTitle;
+        try {
+          session = parsePptx(next);
+        } catch { /* keep session */ }
+        setSaveState(res.persisted ? "savedLocal" : "tabOnly");
+      } else {
+        const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
+        baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
+        lastSaved = next;
+        try {
+          const refreshed = parsePptx(next);
+          session = refreshed;
+        } catch { /* keep session */ }
+        hideConflict();
+        setSaveState("saved", baseVersion);
+      }
     } catch (e) {
-      if (e && e.code === -32009) {
+      if (!draft && e && e.code === -32009) {
         const live = Number(e.data && e.data.liveVersion) || 0;
         showConflict(live || baseVersion + 1);
-      } else if (e && e.code === -32001) {
+      } else if (!draft && e && e.code === -32001) {
         setSaveState("readonly");
       } else {
         setSaveState("unsaved");
@@ -1038,6 +1076,8 @@ async function main() {
       }
     }
   };
+
+  standaloneTitleEl?.addEventListener("input", () => scheduleSave(true));
 
   // Wire UI controls
   prevSlideBtn?.addEventListener("click", () => selectSlide(activeSlideIdx - 1));
@@ -1250,8 +1290,9 @@ async function main() {
   }
   window.addEventListener("resize", () => {
     const canEdit = editableNow();
+    const savedKind = draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved";
     if (!canEdit && saveState.kind !== "conflict") setSaveState("readonly");
-    else if (canEdit && saveState.kind === "readonly") setSaveState("saved", baseVersion);
+    else if (canEdit && saveState.kind === "readonly") setSaveState(savedKind, baseVersion);
     renderMainStage();
   });
 
@@ -1272,7 +1313,8 @@ async function main() {
 
   if (barEl) barEl.hidden = false;
   if (workspaceEl) workspaceEl.hidden = false;
-  setSaveState(editableNow() ? "saved" : "readonly", baseVersion);
+  const initialSavedKind = draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved";
+  setSaveState(editableNow() ? initialSavedKind : "readonly", baseVersion);
   renderRail();
   applyLanguage();
   renderMainStage();

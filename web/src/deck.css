@@ -56,6 +56,47 @@ body {
 [hidden] { display: none !important; }
 
 /* Top toolbar */
+#standalone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 8px;
+  background: var(--bg-bar);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.ctl-btn.is-bordered {
+  padding: 0 9px;
+  border-color: var(--border-ctl);
+  background: var(--bg-elev);
+}
+
+#standalone-title {
+  flex: 1 1 140px;
+  min-width: 80px;
+  max-width: 380px;
+  height: var(--ctl-h);
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-primary);
+  font: 600 13px/1 system-ui, sans-serif;
+}
+
+#standalone-title:hover { border-color: var(--border-ctl); }
+#standalone-title:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  background: var(--bg-elev);
+}
+
+@media (max-width: 560px) {
+  #back-hub-label { display: none; }
+}
+
 #bar {
   display: flex;
   align-items: center;

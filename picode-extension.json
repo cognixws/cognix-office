@@ -4,26 +4,17 @@
     "picode-office"
   ],
   "name": "Office files",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "apiVersion": 1,
   "publisher": "COGNIX[WS]",
-  "description": "Spreadsheets, Word documents, and presentations as artifacts: publish or import .xlsx, .docx, and .pptx files and edit them in place with versioned autosave.",
+  "icon": "ui/icon.svg",
+  "description": "Spreadsheets, Word documents, and presentations: open or create .xlsx, .docx, and .pptx files in Apps or edit published artifacts in place with versioned autosave.",
   "ui": {
     "pages": [
       {
-        "id": "sheet",
-        "title": "Spreadsheet",
-        "path": "ui/sheet.html"
-      },
-      {
-        "id": "doc",
-        "title": "Word document",
-        "path": "ui/doc.html"
-      },
-      {
-        "id": "deck",
-        "title": "Presentation",
-        "path": "ui/deck.html"
+        "id": "office",
+        "title": "Office files",
+        "path": "ui/office.html"
       }
     ]
   },
@@ -35,7 +26,7 @@
         "types": [
           "xlsx"
         ],
-        "page": "sheet",
+        "page": "office",
         "entryContains": [
           "[Content_Types].xml"
         ]
@@ -46,7 +37,7 @@
         "types": [
           "docx"
         ],
-        "page": "doc",
+        "page": "office",
         "entryContains": [
           "[Content_Types].xml",
           "word/document.xml"
@@ -58,7 +49,7 @@
         "types": [
           "pptx"
         ],
-        "page": "deck",
+        "page": "office",
         "entryContains": [
           "[Content_Types].xml",
           "ppt/presentation.xml"

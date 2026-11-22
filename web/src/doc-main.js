@@ -15,6 +15,7 @@ import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { parseDocx, saveDocx } from "./docx-codec.js";
 import { resolveLang, stringsFor } from "./i18n.js";
+import { navigateFrame, openStandaloneDraft } from "./standalone-store.js";
 import "./doc.css";
 
 // Custom FontSize attribute on TextStyle so OOXML run font sizes survive edits.
@@ -84,6 +85,10 @@ const SearchHighlight = Extension.create({
 });
 
 const barEl = document.getElementById("bar");
+const standaloneHeadEl = document.getElementById("standalone-head");
+const backHubBtn = document.getElementById("back-hub");
+const backHubLabelEl = document.getElementById("back-hub-label");
+const standaloneTitleEl = document.getElementById("standalone-title");
 const toolsEl = document.getElementById("tools");
 const docNameEl = document.getElementById("doc-name");
 const wordCountEl = document.getElementById("word-count");
@@ -141,6 +146,12 @@ function paintSave() {
   if (saveState.kind === "saved") {
     saveEl.dataset.tone = "ok";
     saveTextEl.textContent = s.saved(saveState.n);
+  } else if (saveState.kind === "savedLocal") {
+    saveEl.dataset.tone = "ok";
+    saveTextEl.textContent = s.savedLocal;
+  } else if (saveState.kind === "tabOnly") {
+    saveEl.dataset.tone = "";
+    saveTextEl.textContent = s.tabOnly;
   } else if (saveState.kind === "saving") {
     saveEl.dataset.tone = "busy";
     saveTextEl.textContent = s.saving;
@@ -277,6 +288,9 @@ function applyLanguage() {
     closeFindBtn.setAttribute("aria-label", s.closeFind);
   }
   if (findBarEl && !findBarEl.hidden) refreshSearch(false);
+  if (backHubBtn) backHubBtn.setAttribute("aria-label", s.backToHubAria);
+  if (backHubLabelEl) backHubLabelEl.textContent = s.backToHub;
+  if (standaloneTitleEl) standaloneTitleEl.setAttribute("aria-label", s.fileTitleAria);
   updateWordCount();
   paintSave();
 }
@@ -334,46 +348,64 @@ function hideConflict() {
 }
 
 async function main() {
-  let door;
+  const draft = await openStandaloneDraft("docx");
+  let door = null;
   let linksDoor = null;
+  let info = null;
+  let writableCap = false;
+  let base64 = "";
+
   try {
-    door = await picode.use("artifact");
     linksDoor = await picode.use("links").catch(() => null);
   } catch {
-    fail(S().docUnreadableTitle, S().notStandalone);
-    return;
-  }
-  if (!door || typeof door.get !== "function") {
-    fail(S().docUnreadableTitle, S().notStandalone);
-    return;
+    linksDoor = null;
   }
 
-  let info;
-  try {
-    info = await door.get();
-  } catch {
-    fail(S().docUnreadableTitle, S().docUnreadable);
-    return;
-  }
-  if (!info || !info.entry) {
-    fail(S().docUnreadableTitle, S().docUnreadable);
-    return;
-  }
+  if (draft) {
+    pageTitle = draft.title || S().untitledDoc;
+    writableCap = true;
+    base64 = draft.data;
+    if (standaloneHeadEl) standaloneHeadEl.hidden = false;
+    if (standaloneTitleEl) standaloneTitleEl.value = pageTitle;
+    backHubBtn?.addEventListener("click", () => draft.back());
+  } else {
+    try {
+      door = await picode.use("artifact");
+    } catch {
+      navigateFrame("office.html");
+      return;
+    }
+    if (!door || typeof door.get !== "function") {
+      navigateFrame("office.html");
+      return;
+    }
 
-  pageTitle = info.title || "";
-  const writableCap = Array.isArray(info.capabilities) && info.capabilities.includes("publish");
+    try {
+      info = await door.get();
+    } catch {
+      fail(S().docUnreadableTitle, S().docUnreadable);
+      return;
+    }
+    if (!info || !info.entry) {
+      fail(S().docUnreadableTitle, S().docUnreadable);
+      return;
+    }
 
-  let file;
-  try {
-    file = await door.read(info.entry);
-  } catch {
-    fail(S().docUnreadableTitle, S().docUnreadable);
-    return;
-  }
-  const base64 = file && file.base64;
-  if (!base64) {
-    fail(S().docUnreadableTitle, S().docUnreadable);
-    return;
+    pageTitle = info.title || "";
+    writableCap = Array.isArray(info.capabilities) && info.capabilities.includes("publish");
+
+    let file;
+    try {
+      file = await door.read(info.entry);
+    } catch {
+      fail(S().docUnreadableTitle, S().docUnreadable);
+      return;
+    }
+    base64 = (file && file.base64) || "";
+    if (!base64) {
+      fail(S().docUnreadableTitle, S().docUnreadable);
+      return;
+    }
   }
 
   let session;
@@ -390,8 +422,9 @@ async function main() {
     paperEl.style.setProperty("--doc-max-w", `${Math.min(900, Math.max(640, session.page.widthPx))}px`);
   }
 
-  let baseVersion = info.version || 1;
+  let baseVersion = (info && info.version) || 1;
   let lastSaved = "";
+  let lastSavedTitle = pageTitle;
   let timer = 0;
   let saving = false;
   let pending = false;
@@ -447,7 +480,7 @@ async function main() {
 
   async function save() {
     clearTimeout(timer);
-    if (!editableNow()) return;
+    if (!editableNow() && !draft) return;
     if (saving) {
       pending = true;
       return;
@@ -459,23 +492,32 @@ async function main() {
       setSaveState("unsaved");
       return;
     }
-    if (next === lastSaved) {
-      setSaveState("saved", baseVersion);
+    const nextTitle = draft && standaloneTitleEl ? standaloneTitleEl.value.trim() || S().untitledDoc : pageTitle;
+    if (next === lastSaved && nextTitle === lastSavedTitle) {
+      setSaveState(draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved", baseVersion);
       return;
     }
     saving = true;
     setSaveState("saving");
     try {
-      const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
-      baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
-      lastSaved = next;
-      hideConflict();
-      setSaveState("saved", baseVersion);
+      if (draft) {
+        const res = await draft.save(next, nextTitle);
+        lastSaved = next;
+        lastSavedTitle = nextTitle;
+        pageTitle = nextTitle;
+        setSaveState(res.persisted ? "savedLocal" : "tabOnly");
+      } else {
+        const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
+        baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
+        lastSaved = next;
+        hideConflict();
+        setSaveState("saved", baseVersion);
+      }
     } catch (e) {
-      if (e && e.code === -32009) {
+      if (!draft && e && e.code === -32009) {
         const live = Number(e.data && e.data.liveVersion) || 0;
         showConflict(live || baseVersion + 1);
-      } else if (e && e.code === -32001) {
+      } else if (!draft && e && e.code === -32001) {
         setSaveState("readonly");
       } else {
         setSaveState("unsaved");
@@ -493,6 +535,8 @@ async function main() {
     clearTimeout(timer);
     timer = setTimeout(save, 1500);
   }
+
+  standaloneTitleEl?.addEventListener("input", () => scheduleSave());
 
   // Toolbar bindings
   toolsEl?.addEventListener("click", (e) => {
@@ -642,8 +686,9 @@ async function main() {
         el.hidden = !canEdit;
       }
     }
+    const savedKind = draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved";
     if (!canEdit && saveState.kind !== "conflict") setSaveState("readonly");
-    else if (canEdit && saveState.kind === "readonly") setSaveState("saved", baseVersion);
+    else if (canEdit && saveState.kind === "readonly") setSaveState(savedKind, baseVersion);
   });
 
   conflictEl?.addEventListener("click", async (e) => {
@@ -666,7 +711,8 @@ async function main() {
   for (const el of toolsEl?.querySelectorAll("[data-edit-tool]") || []) {
     el.hidden = !editableNow();
   }
-  setSaveState(editableNow() ? "saved" : "readonly", baseVersion);
+  const initialSavedKind = draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved";
+  setSaveState(editableNow() ? initialSavedKind : "readonly", baseVersion);
   applyLanguage();
   updateToolbarState();
   document.body.dataset.ready = "1";

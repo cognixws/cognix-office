@@ -1,6 +1,7 @@
 import { build } from "vite";
 
 const entries = [
+  { entry: "src/hub-main.js", name: "OfficeHub", base: "hub" },
   { entry: "src/main.js", name: "OfficeSheet", base: "office" },
   { entry: "src/doc-main.js", name: "OfficeDoc", base: "doc" },
   { entry: "src/deck-main.js", name: "OfficeDeck", base: "deck" },

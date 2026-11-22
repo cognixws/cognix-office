@@ -489,3 +489,59 @@ export function ensureContentTypeOverride(files, partName, contentType) {
     // leave untouched
   }
 }
+
+export function detectOoxmlKind(input) {
+  let files;
+  try {
+    files = unzipPackage(input);
+  } catch {
+    return "";
+  }
+  if (!files["[Content_Types].xml"]) return "";
+  if (files["word/document.xml"]) return "docx";
+  if (files["ppt/presentation.xml"]) return "pptx";
+  if (files["xl/workbook.xml"]) return "xlsx";
+  return "";
+}
+
+export function createBlankXlsx(sheetName = "Sheet1") {
+  const safeName = escapeXml(String(sheetName || "Sheet1").slice(0, 31));
+  const files = {
+    "[Content_Types].xml": strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+        `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+        `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+        `<Default Extension="xml" ContentType="application/xml"/>` +
+        `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
+        `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>` +
+        `</Types>`
+    ),
+    "_rels/.rels": strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+        `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+        `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>` +
+        `</Relationships>`
+    ),
+    "xl/workbook.xml": strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+        `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+        `<sheets><sheet name="${safeName}" sheetId="1" r:id="rId1"/></sheets>` +
+        `</workbook>`
+    ),
+    "xl/_rels/workbook.xml.rels": strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+        `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+        `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>` +
+        `</Relationships>`
+    ),
+    "xl/worksheets/sheet1.xml": strToU8(
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
+        `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+        `<dimension ref="A1"/>` +
+        `<sheetData/>` +
+        `</worksheet>`
+    ),
+  };
+  return zipPackage(files);
+}
+

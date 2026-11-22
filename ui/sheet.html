@@ -8,10 +8,27 @@
 <style>
   html, body { margin: 0; height: 100%; color-scheme: light; background: #fff; font: 13px/1.45 system-ui, sans-serif; color: #1b1d23; }
   body { display: flex; flex-direction: column; }
+  #standalone-head { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 4px 10px; border-bottom: 1px solid #e4e7ec; background: #f8f9fb; color: #181b22; flex-shrink: 0; }
+  html[data-theme="dark"] #standalone-head { background: #14171f; border-bottom-color: #262b38; color: #e6e9ef; }
+  #standalone-head[hidden] { display: none !important; }
+  #back-hub { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 9px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: inherit; font: 12px/1 system-ui, sans-serif; cursor: pointer; flex-shrink: 0; }
+  html[data-theme="dark"] #back-hub { background: #1e2230; border-color: #32384a; }
+  #back-hub:hover { background: #f2f4f7; }
+  html[data-theme="dark"] #back-hub:hover { background: #262b3b; }
+  #back-hub svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 1.9; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  #standalone-title { flex: 1 1 120px; min-width: 80px; max-width: 340px; height: 28px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; font: 600 13px/1 system-ui, sans-serif; }
+  #standalone-title:hover { border-color: #d0d5dd; }
+  html[data-theme="dark"] #standalone-title:hover { border-color: #32384a; }
+  #standalone-title:focus { outline: 2px solid #3b82f6; outline-offset: 0; background: #fff; color: #181b22; }
+  html[data-theme="dark"] #standalone-title:focus { background: #0e1016; color: #e6e9ef; }
+  #standalone-head .sp { flex: 1; }
+  #standalone-head select { height: 26px; padding: 0 6px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #181b22; font: 12px system-ui, sans-serif; }
+  html[data-theme="dark"] #standalone-head select { background: #1e2230; border-color: #32384a; color: #e6e9ef; }
+  html[data-theme="dark"] #standalone-head .save { color: #9aa3b2; }
   #bar { display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 12px; border-bottom: 1px solid #e9ecf2; background: #fff; }
-  /* One row of chrome: the title and the save state ride the menu strip's
-     right side, over it, so Univer's re-renders never take them away
-     (owner, 2026-11-06). */
+  /* One row of chrome in artifact mode: the title and the save state ride the
+     menu strip's right side, over it, so Univer's re-renders never take them
+     away (owner, 2026-11-06). */
   #app { position: relative; }
   #bar { position: absolute; top: 0; right: 10px; height: 29px; min-height: 0; padding: 0; border: 0; background: transparent; z-index: 20; }
   #bar[hidden] { display: none; }
@@ -22,6 +39,7 @@
      language and the save state and leaves the menu strip alone. */
   @media (max-width: 560px) {
     #bar .name, #bar .sp, #bar #freeze { display: none; }
+    #standalone-head #freeze, #back-hub-label { display: none; }
   }
   .save { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #667085; white-space: nowrap; }
   .save .dot { width: 6px; height: 6px; border-radius: 50%; background: #98a2b3; }
@@ -48,6 +66,14 @@
 </style>
 </head>
 <body>
+<div id="standalone-head" hidden>
+  <button type="button" id="back-hub" aria-label="Back to Office files">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    <span id="back-hub-label">Office files</span>
+  </button>
+  <input type="text" id="standalone-title" aria-label="File title">
+  <span class="sp"></span>
+</div>
 <div id="bar" hidden>
   <span class="name">Planilha</span>
   <span class="sp"></span>

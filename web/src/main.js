@@ -6,6 +6,7 @@ import { UniverSheetsFindReplacePreset } from "@univerjs/preset-sheets-find-repl
 import FindReplacePtBR from "@univerjs/preset-sheets-find-replace/locales/pt-BR";
 import FindReplaceEnUS from "@univerjs/preset-sheets-find-replace/locales/en-US";
 import { localeOf, numfmtOf, resolveLang, stringsFor } from "./i18n.js";
+import { navigateFrame, openStandaloneDraft } from "./standalone-store.js";
 import { createUniver, mergeLocales } from "@univerjs/presets";
 import "@univerjs/preset-sheets-core/lib/index.css";
 import "./sheet.css";
@@ -27,6 +28,10 @@ const conflictText = document.getElementById("conflict-text");
 const conflictOpen = conflict ? conflict.querySelector('[data-act="open"]') : null;
 const conflictKeep = conflict ? conflict.querySelector('[data-act="keep"]') : null;
 const bar = document.getElementById("bar");
+const standaloneHead = document.getElementById("standalone-head");
+const backHubBtn = document.getElementById("back-hub");
+const backHubLabel = document.getElementById("back-hub-label");
+const standaloneTitleEl = document.getElementById("standalone-title");
 const langEl = document.getElementById("lang");
 const freezeEl = document.getElementById("freeze");
 const retryEl = document.getElementById("retry");
@@ -187,6 +192,8 @@ let saveState = { kind: "saved", n: 1 };
 function paintSave() {
   const s = S();
   if (saveState.kind === "saved") setSave(s.saved(saveState.n), "ok");
+  else if (saveState.kind === "savedLocal") setSave(s.savedLocal, "ok");
+  else if (saveState.kind === "tabOnly") setSave(s.tabOnly, "");
   else if (saveState.kind === "saving") setSave(s.saving, "busy");
   else if (saveState.kind === "unsaved") setSave(s.unsaved, "error");
   else if (saveState.kind === "readonly") setSave(s.readOnly, "");
@@ -225,6 +232,9 @@ function applyLanguage() {
   if (typeof document !== "undefined") document.documentElement.lang = lang;
   if (stateTitle) stateTitle.textContent = S().undrawable;
   if (retryEl) retryEl.textContent = S().retry;
+  if (backHubBtn) backHubBtn.setAttribute("aria-label", S().backToHubAria);
+  if (backHubLabel) backHubLabel.textContent = S().backToHub;
+  if (standaloneTitleEl) standaloneTitleEl.setAttribute("aria-label", S().fileTitleAria);
   const nameEl = bar && bar.querySelector(".name");
   if (nameEl) nameEl.textContent = pageTitle || S().title;
   if (conflictOpen) conflictOpen.textContent = S().open;
@@ -235,38 +245,60 @@ function applyLanguage() {
 }
 
 async function main() {
-  let door;
-  try {
-    door = await picode.use("artifact");
-  } catch {
-    fail(S().notStandalone);
-    return;
-  }
-  let info;
-  try {
-    info = await door.get();
-  } catch {
-    fail(S().unreadable);
-    return;
-  }
-  if (!info || !info.entry) {
-    fail(S().notWorkbook);
-    return;
-  }
-  pageTitle = info.title || "";
-  const writable = Array.isArray(info.capabilities) && info.capabilities.indexOf("publish") >= 0;
+  const draft = await openStandaloneDraft("xlsx");
+  let door = null;
+  let info = null;
+  let writable = false;
+  let base64 = "";
 
-  let file;
-  try {
-    file = await door.read(info.entry);
-  } catch {
-    fail(S().unreadable);
-    return;
-  }
-  const base64 = file && file.base64;
-  if (!base64) {
-    fail(S().notWorkbook);
-    return;
+  if (draft) {
+    pageTitle = draft.title || S().untitledSheet;
+    writable = true;
+    base64 = draft.data;
+    if (standaloneHead) {
+      if (freezeEl) standaloneHead.appendChild(freezeEl);
+      if (langEl) standaloneHead.appendChild(langEl);
+      if (saveEl) standaloneHead.appendChild(saveEl);
+      standaloneHead.hidden = false;
+    }
+    if (standaloneTitleEl) standaloneTitleEl.value = pageTitle;
+    backHubBtn?.addEventListener("click", () => draft.back());
+  } else {
+    try {
+      door = await picode.use("artifact");
+    } catch {
+      navigateFrame("office.html");
+      return;
+    }
+    if (!door || typeof door.get !== "function") {
+      navigateFrame("office.html");
+      return;
+    }
+    try {
+      info = await door.get();
+    } catch {
+      fail(S().unreadable);
+      return;
+    }
+    if (!info || !info.entry) {
+      fail(S().notWorkbook);
+      return;
+    }
+    pageTitle = info.title || "";
+    writable = Array.isArray(info.capabilities) && info.capabilities.indexOf("publish") >= 0;
+
+    let file;
+    try {
+      file = await door.read(info.entry);
+    } catch {
+      fail(S().unreadable);
+      return;
+    }
+    base64 = (file && file.base64) || "";
+    if (!base64) {
+      fail(S().notWorkbook);
+      return;
+    }
   }
 
   let book;
@@ -301,18 +333,14 @@ async function main() {
           statusBarStatistic: true,
           disableAutoFocus: !writable,
         }),
-        // Ctrl+F inside the grid (find and replace), the daily Excel/Sheets
-        // habit; the preset brings the dialog and the sheet commands.
         UniverSheetsFindReplacePreset(),
       ],
     });
     univerAPI = made.univerAPI;
-    univerAPI.createWorkbook(toSnapshot(book, info.title));
+    univerAPI.createWorkbook(toSnapshot(book, pageTitle));
 
     const workbook = univerAPI.getActiveWorkbook();
     if (!writable && workbook && typeof workbook.setEditable === "function") workbook.setEditable(false);
-    // The sheet's numbers and dates read in the chosen language (pt_BR shows
-    // 1.234,57 where en_US shows 1,234.57); patterns are saved unchanged.
     if (workbook && typeof workbook.setNumfmtLocal === "function") workbook.setNumfmtLocal(numfmtOf(lang));
     if (freezeEl) {
       freezeEl.hidden = false;
@@ -349,8 +377,8 @@ async function main() {
     return;
   }
 
-  if (bar) bar.hidden = false;
-  if (bar) {
+  if (!draft && bar) {
+    bar.hidden = false;
     const title = bar.querySelector(".name");
     if (title) title.textContent = pageTitle || S().title;
   }
@@ -360,17 +388,16 @@ async function main() {
     return;
   }
 
-  let baseVersion = info.version || 1;
-  // The canonical form of what was drawn: opening a workbook must not make a
-  // version; only a real change differs from it.
+  let baseVersion = (info && info.version) || 1;
   let lastSaved = "";
+  let lastSavedTitle = pageTitle;
   try {
     lastSaved = fromSnapshot(univerAPI.getActiveWorkbook().save());
   } catch { lastSaved = base64; }
   let timer = 0;
   let saving = false;
   let pending = false;
-  setSaveState("saved", baseVersion);
+  setSaveState(draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved", baseVersion);
 
   async function save() {
     clearTimeout(timer);
@@ -382,20 +409,32 @@ async function main() {
       return;
     }
     const next = fromSnapshot(snapshot);
-    if (next === lastSaved) { setSaveState("saved", baseVersion); return; }
+    const nextTitle = draft && standaloneTitleEl ? standaloneTitleEl.value.trim() || S().untitledSheet : pageTitle;
+    if (next === lastSaved && nextTitle === lastSavedTitle) {
+      setSaveState(draft ? (draft.persisted ? "savedLocal" : "tabOnly") : "saved", baseVersion);
+      return;
+    }
     saving = true;
     setSaveState("saving");
     try {
-      const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
-      baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
-      lastSaved = next;
-      hideConflict();
-      setSaveState("saved", baseVersion);
+      if (draft) {
+        const res = await draft.save(next, nextTitle);
+        lastSaved = next;
+        lastSavedTitle = nextTitle;
+        pageTitle = nextTitle;
+        setSaveState(res.persisted ? "savedLocal" : "tabOnly");
+      } else {
+        const out = await door.publishFiles([{ path: info.entry, data: next }], baseVersion);
+        baseVersion = (out && out.version && out.version.n) || baseVersion + 1;
+        lastSaved = next;
+        hideConflict();
+        setSaveState("saved", baseVersion);
+      }
     } catch (e) {
-      if (e && e.code === -32009) {
+      if (!draft && e && e.code === -32009) {
         const live = Number(e.data && e.data.liveVersion) || 0;
         showConflict(live || baseVersion + 1);
-      } else if (e && e.code === -32001) {
+      } else if (!draft && e && e.code === -32001) {
         setSaveState("readonly");
       } else {
         setSaveState("unsaved");
@@ -414,6 +453,7 @@ async function main() {
   // Any command may change a cell or a format; selection alone is cheap to
   // skip because an unchanged workbook saves nothing (the digest check above).
   univerAPI.onCommandExecuted(() => schedule());
+  standaloneTitleEl?.addEventListener("input", () => schedule());
 
   conflict?.addEventListener("click", async (e) => {
     const b = e.target.closest("[data-act]");

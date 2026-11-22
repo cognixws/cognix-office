@@ -56,6 +56,41 @@ body {
 [hidden] { display: none !important; }
 
 /* Top toolbar */
+#standalone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 10px;
+  background: var(--bg-bar);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+#standalone-title {
+  flex: 1 1 140px;
+  min-width: 80px;
+  max-width: 380px;
+  height: var(--ctl-h);
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-primary);
+  font: 600 13px/1 system-ui, sans-serif;
+}
+
+#standalone-title:hover { border-color: var(--border-ctl); }
+#standalone-title:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  background: var(--bg-elev);
+}
+
+@media (max-width: 560px) {
+  #back-hub-label { display: none; }
+}
+
 #bar {
   display: flex;
   align-items: center;
@@ -69,11 +104,7 @@ body {
 }
 
 #tools {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  flex-wrap: wrap;
-  min-width: 0;
+  display: contents;
 }
 
 .bar-sep {
@@ -144,12 +175,13 @@ body {
   flex-shrink: 0;
 }
 
-.bar-spacer { flex: 1 1 auto; min-width: 4px; }
+.bar-spacer { display: none; }
 
 .bar-meta {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
