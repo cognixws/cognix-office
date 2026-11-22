@@ -252,7 +252,7 @@ body {
   min-width: 56px;
 }
 
-/* Document desk & page sheet */
+/* Document desk & page sheet — chrome follows theme, paper stays white (#ffffff) */
 #desk {
   flex: 1 1 auto;
   min-height: 0;
@@ -263,11 +263,20 @@ body {
 
 #paper {
   --doc-max-w: 816px;
+  --paper-bg: #ffffff;
+  --paper-fg: #181b22;
+  --paper-muted: #475569;
+  --paper-code-bg: #f1f5f9;
+  --paper-surface: #f8fafc;
+  --paper-border: #cbd5e1;
+  --paper-frame: #262b38;
+  color-scheme: light;
   width: 100%;
   max-width: var(--doc-max-w);
   min-height: calc(100% - 8px);
   margin: 0 auto;
-  background: var(--bg-paper);
+  background: var(--paper-bg);
+  color: var(--paper-fg);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 48px 56px;
@@ -278,48 +287,51 @@ body {
   min-height: 360px;
   font-size: 14.5px;
   line-height: 1.62;
-  color: var(--fg-primary);
+  color: var(--paper-fg);
   word-wrap: break-word;
 }
 .ProseMirror p { margin: 0 0 0.7em; }
-.ProseMirror h1 { font-size: 1.75em; line-height: 1.25; margin: 0.9em 0 0.45em; font-weight: 700; }
-.ProseMirror h2 { font-size: 1.38em; line-height: 1.3; margin: 0.85em 0 0.4em; font-weight: 650; }
-.ProseMirror h3 { font-size: 1.15em; line-height: 1.35; margin: 0.75em 0 0.35em; font-weight: 600; }
-.ProseMirror h4 { font-size: 1.02em; line-height: 1.4; margin: 0.65em 0 0.3em; font-weight: 600; }
+.ProseMirror h1 { font-size: 1.75em; line-height: 1.25; margin: 0.9em 0 0.45em; font-weight: 700; color: #0f172a; }
+.ProseMirror h2 { font-size: 1.38em; line-height: 1.3; margin: 0.85em 0 0.4em; font-weight: 650; color: #0f172a; }
+.ProseMirror h3 { font-size: 1.15em; line-height: 1.35; margin: 0.75em 0 0.35em; font-weight: 600; color: #0f172a; }
+.ProseMirror h4 { font-size: 1.02em; line-height: 1.4; margin: 0.65em 0 0.3em; font-weight: 600; color: #0f172a; }
 .ProseMirror > :first-child { margin-top: 0; }
 .ProseMirror ul, .ProseMirror ol { margin: 0 0 0.75em; padding-left: 1.5em; }
 .ProseMirror li p { margin-bottom: 0.25em; }
 .ProseMirror blockquote {
   margin: 0.75em 0;
-  padding: 6px 14px;
-  background: var(--bg-hover);
+  padding: 8px 14px;
+  background: var(--paper-surface);
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  color: var(--fg-muted);
+  color: var(--paper-muted);
   font-style: italic;
 }
 .ProseMirror pre {
   margin: 0.75em 0;
   padding: 10px 12px;
   border-radius: 6px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border-subtle);
+  background: var(--paper-surface);
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
   font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   overflow-x: auto;
 }
 .ProseMirror code {
-  padding: 1px 4px;
+  padding: 1px 5px;
   border-radius: 4px;
-  background: var(--bg-hover);
+  background: var(--paper-code-bg);
+  color: #0f172a;
   font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 .ProseMirror pre code { padding: 0; background: none; }
 .ProseMirror hr {
   border: 0;
-  border-top: 1px solid var(--border-ctl);
+  border-top: 1px solid var(--paper-border);
   margin: 1.2em 0;
 }
 .ProseMirror a {
-  color: var(--accent);
+  color: #2563eb;
   text-decoration: underline;
 }
 .ProseMirror img {
@@ -334,17 +346,19 @@ body {
   table-layout: fixed;
 }
 .ProseMirror th, .ProseMirror td {
-  border: 1px solid var(--border-ctl);
+  border: 1px solid var(--paper-border);
   padding: 7px 10px;
   vertical-align: top;
   word-break: break-word;
+  color: var(--paper-fg);
 }
 .ProseMirror th {
-  background: var(--bg-hover);
+  background: var(--paper-code-bg);
+  color: #0f172a;
   font-weight: 600;
 }
 .ProseMirror mark {
-  color: #181b22; /* token-ok: highlight ink stays dark on yellow/pastel highlight swatches */
+  color: #181b22;
   border-radius: 2px;
   padding: 0 2px;
 }
@@ -416,12 +430,10 @@ body {
 }
 
 @media (max-width: 560px) {
-  #desk { padding: 0; }
+  #desk { padding: 8px; }
   #paper {
-    border: 0;
-    border-radius: 0;
-    padding: 18px 16px 32px;
-    min-height: 100%;
+    padding: 18px 14px 28px;
+    min-height: calc(100% - 4px);
   }
   #find-bar input { width: 130px; }
 }

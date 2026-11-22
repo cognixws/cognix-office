@@ -175,8 +175,7 @@ function marksFromRPr(rPr, styleRPr, linkHref, theme) {
     } else if (themeClr && theme && theme.colors && theme.colors[themeClr]) {
       hex = theme.colors[themeClr];
     }
-    // Keep body default ink adaptive across dark/light themes unless explicitly colored.
-    if (hex && !isNearBlackInk(hex)) {
+    if (hex) {
       textStyleAttrs.color = hex;
     }
   }

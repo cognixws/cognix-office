@@ -55,8 +55,10 @@ with `publish` enabled so you can edit immediately.
   - `pptx`: `["[Content_Types].xml", "ppt/presentation.xml"]`
   Renamed or non-OOXML files are refused with HTTP 400 before a version is stored.
 - **Languages & themes:** **Português** and **English** (defaulting to the
-  browser's language); dark and light themes follow COGNIX[WS] live; narrow
-  phone viewports (`≤ 560 px`) present a clean read-only layout.
+  browser's language); the toolbar and desk follow COGNIX[WS]'s dark and light
+  themes live while the `.docx` page and `.pptx` slide stay white paper so
+  authored colors and highlights read faithfully; narrow phone viewports
+  (`≤ 560 px`) present a clean read-only layout.
 
 ## Development
 
